@@ -1,7 +1,9 @@
 package com.abc;
 
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,8 +12,8 @@ public class CustomerTest {
     @Test //Test customer statement generation
     public void testApp(){
 
-        Account checkingAccount = new Account(Account.CHECKING);
-        Account savingsAccount = new Account(Account.SAVINGS);
+        AccountBase checkingAccount = new CheckingAccount();
+        AccountBase savingsAccount = new SavingsAccount();
 
         Customer henry = new Customer("Henry").openAccount(checkingAccount).openAccount(savingsAccount);
 
@@ -35,23 +37,77 @@ public class CustomerTest {
 
     @Test
     public void testOneAccount(){
-        Customer oscar = new Customer("Oscar").openAccount(new Account(Account.SAVINGS));
+        Customer oscar = new Customer("Oscar").openAccount(new CheckingAccount());
         assertEquals(1, oscar.getNumberOfAccounts());
     }
 
     @Test
     public void testTwoAccount(){
         Customer oscar = new Customer("Oscar")
-                .openAccount(new Account(Account.SAVINGS));
-        oscar.openAccount(new Account(Account.CHECKING));
+                .openAccount(new SavingsAccount());
+        oscar.openAccount(new CheckingAccount());
         assertEquals(2, oscar.getNumberOfAccounts());
     }
 
     @Ignore
-    public void testThreeAcounts() {
+    public void testThreeAccounts() {
         Customer oscar = new Customer("Oscar")
-                .openAccount(new Account(Account.SAVINGS));
-        oscar.openAccount(new Account(Account.CHECKING));
+                .openAccount(new SavingsAccount());
+        oscar.openAccount(new CheckingAccount());
         assertEquals(3, oscar.getNumberOfAccounts());
+    }
+    
+    @Test
+    public void testTransferBetweenAccounts() {
+    	double transfer = 78;
+    	
+    	Customer customer1 = new Customer("First");
+    	AccountBase account1 = new CheckingAccount();
+    	AccountBase account2 = new SavingsAccount();
+    	
+    	customer1.openAccount(account1);
+    	customer1.openAccount(account2);
+    	
+    	account1.deposit(200);
+    	
+    	assertEquals(true, customer1.transferBetweenAccounts(transfer, account1, account2));
+    }
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+    
+    @Test
+    public void testTransferBetweenAccountsFalse() {
+    	double transfer = 278;
+    	
+    	Customer customer1 = new Customer("First");
+    	AccountBase account1 = new CheckingAccount();
+    	AccountBase account2 = new SavingsAccount();
+    	
+    	customer1.openAccount(account1);
+    	customer1.openAccount(account2);
+    	
+    	account1.deposit(200);
+    	
+    	exception.expect(IllegalArgumentException.class);
+    	
+    	customer1.transferBetweenAccounts(transfer, account1, account2);
+    }
+    
+    @Test
+    public void testTransferBetweenAccountsNotMine() {
+    	double transfer = 278;
+    	
+    	Customer customer1 = new Customer("First");
+    	AccountBase account1 = new CheckingAccount();
+    	customer1.openAccount(account1);
+    	account1.deposit(200);
+
+    	Customer customer2 = new Customer("Second");
+    	AccountBase account2 = new SavingsAccount();
+    	customer2.openAccount(account1);
+    	
+    	exception.expect(IllegalArgumentException.class);
+    	
+    	customer1.transferBetweenAccounts(transfer, account1, account2);
     }
 }
